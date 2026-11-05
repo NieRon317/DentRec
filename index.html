@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Klinik Gigi • Sistem Informasi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{background:#f5f7fb;color:#1e293b}.tooth{cursor:pointer;stroke:#64748b;stroke-width:2;fill:#fff;transition:.15s}.tooth:hover{stroke:#0f766e;stroke-width:3}.tooth[data-status="lubang"]{fill:#fca5a5}.tooth[data-status="tambal"]{fill:#93c5fd}.tooth[data-status="cabut"]{fill:#cbd5e1;opacity:.6}.tooth-label{font:10px sans-serif;fill:#475569;pointer-events:none}.nav-active{background:#ccfbf1;color:#115e59}
+  </style>
+</head>
+<body>
+<div class="min-h-screen md:flex">
+  <aside class="md:w-60 bg-white border-r p-5"><div class="text-xl font-bold text-teal-800">🦷 Klinik Gigi</div><p class="text-xs text-slate-500 mt-1">Sistem Informasi Klinik</p>
+    <nav class="mt-8 space-y-2"><button class="nav-btn nav-active w-full text-left px-3 py-2 rounded-lg" data-view="dashboard">Pasien</button><button class="nav-btn w-full text-left px-3 py-2 rounded-lg" data-view="medical">Rekam Medis</button></nav>
+    <p class="mt-10 text-xs text-slate-400">API <span id="apiState">belum terhubung</span></p></aside>
+  <main class="flex-1 p-4 md:p-8 max-w-7xl">
+    <section id="view-dashboard"><div class="flex flex-wrap justify-between gap-3 items-center"><div><h1 class="text-2xl font-bold">Daftar Pasien</h1><p class="text-slate-500">Cari pasien dan buka kunjungan klinis.</p></div><button id="newPatient" class="rounded-lg bg-teal-700 text-white px-4 py-2">+ Pasien Baru</button></div>
+      <div class="mt-6 bg-white rounded-xl p-4 shadow-sm"><input id="search" class="border rounded-lg px-3 py-2 w-full md:w-80" placeholder="Cari nama, telepon..."><div class="overflow-x-auto mt-4"><table class="w-full text-sm"><thead><tr class="text-left border-b text-slate-500"><th class="p-3">Nama</th><th class="p-3">Telepon</th><th class="p-3">Tanggal lahir</th><th class="p-3">Aksi</th></tr></thead><tbody id="patientRows"></tbody></table></div></div>
+    </section>
+    <section id="view-medical" class="hidden"><div class="flex items-center gap-3"><button id="backPatients" class="text-teal-800">← Pasien</button><h1 class="text-2xl font-bold">Kunjungan & Rekam Medis</h1></div><p id="patientHeading" class="text-slate-500 mt-1"></p>
+      <div class="grid xl:grid-cols-2 gap-5 mt-5"><div class="space-y-5">
+        <form id="recordForm" class="bg-white rounded-xl p-5 shadow-sm space-y-3"><h2 class="font-semibold text-lg">Catatan klinis</h2><label class="block text-sm">Tanggal kunjungan<input name="tgl_kunjungan" type="date" required class="field"></label><label class="block text-sm">Keluhan<textarea name="keluhan" class="field" rows="2"></textarea></label><label class="block text-sm">Diagnosa<textarea name="diagnosa" class="field" rows="2"></textarea></label><label class="block text-sm">Tindakan<textarea name="tindakan" class="field" rows="2"></textarea></label><label class="block text-sm">URL rontgen<input name="url_rontgen" type="url" class="field" placeholder="https://..."></label><button class="rounded-lg bg-teal-700 text-white px-4 py-2">Simpan Rekam Medis</button></form>
+        <div class="bg-white rounded-xl p-5 shadow-sm"><h2 class="font-semibold text-lg">Resep obat</h2><form id="prescriptionForm" class="space-y-3 mt-3"><label class="block text-sm">Daftar obat<textarea name="daftar_obat" required class="field" rows="3" placeholder="Nama obat, dosis, jumlah"></textarea></label><label class="block text-sm">Instruksi minum<textarea name="instruksi_minum" class="field" rows="2"></textarea></label><button class="rounded-lg bg-indigo-700 text-white px-4 py-2">Simpan & Cetak Resep</button></form></div>
+        <div class="bg-white rounded-xl p-5 shadow-sm"><h2 class="font-semibold text-lg">Pembayaran</h2><form id="receiptForm" class="space-y-3 mt-3"><label class="block text-sm">Rincian tindakan<input name="rincian_tindakan" required class="field" placeholder="Konsultasi, tambal gigi"></label><label class="block text-sm">Total biaya (Rp)<input name="total_biaya" required type="number" min="0" class="field" placeholder="150000"></label><label class="block text-sm">Status<select name="status_bayar" class="field"><option>Lunas</option><option>Belum Lunas</option></select></label><button class="rounded-lg bg-amber-600 text-white px-4 py-2">Simpan & Cetak Kwitansi</button></form></div>
+      </div><div class="space-y-5"><div class="bg-white rounded-xl p-5 shadow-sm"><h2 class="font-semibold text-lg">Odontogram</h2><p class="text-xs text-slate-500">Klik gigi untuk berganti status: sehat → lubang → tambal → cabut.</p><div class="flex gap-3 text-xs mt-3"><span>⬜ Sehat</span><span>🟥 Lubang</span><span>🟦 Tambal</span><span>⬛ Cabut</span></div><div id="odontogram" class="overflow-x-auto mt-3"></div><button id="saveOdontogram" class="mt-3 rounded-lg border px-3 py-2 text-sm">Simpan status odontogram</button></div><div class="bg-white rounded-xl p-5 shadow-sm"><h2 class="font-semibold text-lg">Riwayat kunjungan</h2><div id="recordList" class="divide-y mt-2 text-sm"></div></div></div></div>
+    </section>
+  </main>
+</div>
+<div id="modal" class="hidden fixed inset-0 bg-slate-900/40 items-center justify-center p-4"><form id="patientForm" class="bg-white rounded-xl p-6 w-full max-w-lg space-y-3"><div class="flex justify-between"><h2 class="text-lg font-bold">Pasien baru</h2><button type="button" id="closeModal">✕</button></div><input name="nama" required class="field" placeholder="Nama lengkap"><input name="tgl_lahir" type="date" class="field"><input name="telepon" class="field" placeholder="Telepon"><textarea name="alamat" class="field" placeholder="Alamat"></textarea><button class="rounded-lg bg-teal-700 text-white px-4 py-2">Simpan</button></form></div>
+<style>.field{display:block;width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.55rem .7rem;margin-top:.3rem}</style>
+<script src="app.js"></script>
+</body></html>
