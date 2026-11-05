@@ -1,5 +1,5 @@
 // Tempel URL Web App hasil Deploy > New deployment > Web app.
-const API_URL = 'https://script.google.com/macros/s/AKfycbyGdfNr0yMr6rFQgTU-9Jj_9Dvfhm-VFYYAqhqgVVmB9gAGn1nLl_7_dV2Lw5gQp0TF/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwcH1lvMMK9zAsqom5x-Np9R95zpzUm_E3Of8ZG9pXgc3yI2ltB3jFr8Z77sNWAESzWjQ/exec';
 const state = {patients:[], patient:null, record:null, records:[], teeth:{}};
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
