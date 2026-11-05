@@ -1,0 +1,3 @@
+import {api} from './api.js';import {state,$,notify,showView} from './state.js';import {initPatients,loadPatients} from './patients.js';import {initRecords,loadCatalogOptions} from './records.js';import {initCatalog,refreshCatalog} from './catalog.js';
+initPatients();initRecords();initCatalog();document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+(async()=>{try{await api('health');$('#apiState').textContent='aktif';await Promise.all([loadPatients(),loadCatalogOptions(),refreshCatalog()]);}catch(e){$('#apiState').textContent='gagal';notify(e.message);}})();
