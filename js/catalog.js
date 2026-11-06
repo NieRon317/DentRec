@@ -1,6 +1,6 @@
 import { api } from './api.js';
 import { state, $, esc, formData, notify } from './state.js';
-import { loadCatalogOptions } from './records.js';
+import { populateCatalogOptions } from './records.js';
 
 export function initCatalog() {
   $('#treatmentForm').addEventListener('submit', async (event) => {
@@ -51,5 +51,5 @@ async function refresh() {
     .map((item) => `<div class="border-t py-2">${esc(item.nama)} ${esc(item.keterangan || '')}</div>`)
     .join('');
 
-  await loadCatalogOptions();
+  populateCatalogOptions();
 }
