@@ -6,6 +6,17 @@ import { initCatalog, refreshCatalog } from './catalog.js?v=20261106-5';
 initPatients();
 initRecords();
 initCatalog();
+showView('home');
+
+const jakartaTime = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+const jakartaDate = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+function updateHomeClock() {
+  const now = new Date();
+  $('#homeClock').textContent = jakartaTime.format(now);
+  $('#homeDate').textContent = jakartaDate.format(now);
+}
+updateHomeClock();
+setInterval(updateHomeClock, 1000);
 
 document.querySelectorAll('.nav-btn').forEach(button => {
   button.onclick = () => {
