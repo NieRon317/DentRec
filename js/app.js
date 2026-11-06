@@ -1,7 +1,7 @@
 import { $ , notify, showView } from './state.js';
-import { loadPatients, initPatients } from './patients.js?v=20261106-4';
-import { initRecords } from './records.js?v=20261106-4';
-import { initCatalog, refreshCatalog } from './catalog.js?v=20261106-4';
+import { loadPatients, initPatients } from './patients.js?v=20261106-5';
+import { initRecords } from './records.js?v=20261106-5';
+import { initCatalog, refreshCatalog } from './catalog.js?v=20261106-5';
 
 initPatients();
 initRecords();
