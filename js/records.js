@@ -35,4 +35,5 @@ export function initRecords(){
  document.querySelectorAll('.record-tab').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.tab==='clinical'&&!state.record)resetNewVisit();if(button.dataset.tab==='images')loadPatientImages().catch(error=>notify(error.message));}));
  $('#treatmentRows').innerHTML='';addTreatmentRow();renderOdontogram();
 }
-export async function loadCatalogOptions(){state.treatments=await api('treatments.list');state.medicines=await api('medicines.list');$('#medicineSelect').innerHTML='<option value="">Pilih obat</option>'+state.medicines.map(item=>`<option>${esc(item.nama)}</option>`).join('');document.querySelectorAll('#treatmentRows .treatment-choice').forEach(select=>{const old=select.value;select.innerHTML=actionOptions(old);});}
+export function populateCatalogOptions(){ $('#medicineSelect').innerHTML='<option value="">Pilih obat</option>'+state.medicines.map(item=>`<option>${esc(item.nama)}</option>`).join('');document.querySelectorAll('#treatmentRows .treatment-choice').forEach(select=>{const old=select.value;select.innerHTML=actionOptions(old);});}
+export async function loadCatalogOptions(){state.treatments=await api('treatments.list');state.medicines=await api('medicines.list');populateCatalogOptions();}
