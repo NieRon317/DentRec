@@ -1,12 +1,21 @@
 import { $ , notify, showView } from './state.js';
-import { loadPatients, initPatients } from './patients.js?v=20261106-12';
-import { initRecords } from './records.js?v=20261106-12';
-import { initCatalog, refreshCatalog } from './catalog.js?v=20261106-12';
+import { loadPatients, initPatients } from './patients.js?v=20261106-15';
+import { initRecords } from './records.js?v=20261106-15';
+import { initCatalog, refreshCatalog } from './catalog.js?v=20261106-15';
 
 initPatients();
 initRecords();
 initCatalog();
 showView('home');
+
+document.addEventListener('click', (event) => {
+  const button = event.target.closest?.('button:not(:disabled)');
+  if (!button) return;
+  button.classList.remove('button-tap');
+  void button.offsetWidth;
+  button.classList.add('button-tap');
+  window.setTimeout(() => button.classList.remove('button-tap'), 280);
+});
 
 const jakartaTime = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 const jakartaDate = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
