@@ -1,6 +1,6 @@
 import { api } from './api.js';
-import { state, $, esc, formData, notify } from './state.js?v=20261110-24';
-import { populateCatalogOptions } from './records.js?v=20261110-24';
+import { state, $, esc, formData, notify } from './state.js?v=20261110-27';
+import { populateCatalogOptions } from './records.js?v=20261110-27';
 
 export function initCatalog() {
   $('#treatmentList').addEventListener('click', async (event) => {
