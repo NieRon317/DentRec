@@ -1,6 +1,6 @@
 import { api } from './api.js';
-import { state, $, esc, formData, notify } from './state.js?v=20261110-22';
-import { populateCatalogOptions } from './records.js?v=20261110-22';
+import { state, $, esc, formData, notify } from './state.js?v=20261110-24';
+import { populateCatalogOptions } from './records.js?v=20261110-24';
 
 export function initCatalog() {
   $('#treatmentList').addEventListener('click', async (event) => {
@@ -28,6 +28,10 @@ export function initCatalog() {
   $('#medicineForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
+    if (form.dataset.saving === 'true') return;
+    form.dataset.saving = 'true';
+    const button = event.submitter || form.querySelector('button[type="submit"],button:not([type])');
+    if (button) button.disabled = true;
     try {
       await api('medicines.create', { ...formData(form), aktif: true });
       form.reset();
@@ -35,6 +39,9 @@ export function initCatalog() {
       notify('Obat berhasil ditambahkan.');
     } catch (error) {
       notify(error.message);
+    } finally {
+      form.dataset.saving = 'false';
+      if (button) button.disabled = false;
     }
   });
 }
