@@ -1,11 +1,13 @@
-import { $ , notify, showView } from './state.js';
-import { loadPatients, initPatients } from './patients.js?v=20261106-19';
-import { initRecords } from './records.js?v=20261106-19';
-import { initCatalog, refreshCatalog } from './catalog.js?v=20261106-19';
+import { $ , notify, showView } from './state.js?v=20261110-22';
+import { loadPatients, initPatients } from './patients.js?v=20261110-22';
+import { initRecords } from './records.js?v=20261110-22';
+import { initCatalog, refreshCatalog } from './catalog.js?v=20261110-22';
+import { initReports } from './reports.js?v=20261110-22';
 
 initPatients();
 initRecords();
 initCatalog();
+initReports();
 showView('home');
 
 document.addEventListener('click', (event) => {
@@ -36,6 +38,7 @@ document.querySelectorAll('.nav-btn').forEach(button => {
       $('#medicalSearch').focus();
     }
     if (button.dataset.view === 'catalog') refreshCatalog();
+    if (button.dataset.view === 'report') document.querySelector('#reportMessage').textContent = 'Memuat data report…';
   };
 });
 
