@@ -1,8 +1,8 @@
-import { $ , notify, showView } from './state.js?v=20261110-24';
-import { loadPatients, initPatients } from './patients.js?v=20261110-24';
-import { initRecords } from './records.js?v=20261110-24';
-import { initCatalog, refreshCatalog } from './catalog.js?v=20261110-24';
-import { initReports } from './reports.js?v=20261110-24';
+import { $ , notify, showView } from './state.js?v=20261110-27';
+import { loadPatients, initPatients } from './patients.js?v=20261110-27';
+import { initRecords } from './records.js?v=20261110-27';
+import { initCatalog, refreshCatalog } from './catalog.js?v=20261110-27';
+import { initReports } from './reports.js?v=20261110-27';
 
 initPatients();
 initRecords();
@@ -39,6 +39,7 @@ document.querySelectorAll('.nav-btn').forEach(button => {
     }
     if (button.dataset.view === 'catalog') refreshCatalog();
     if (button.dataset.view === 'report') document.querySelector('#reportMessage').textContent = 'Memuat data report…';
+    if (button.dataset.view === 'pending') document.querySelector('#pendingMessage').textContent = 'Memuat daftar pending…';
   };
 });
 
