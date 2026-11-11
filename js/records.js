@@ -5,9 +5,8 @@ import {printDocument,printReceiptDocument} from './print.js';
 const upper=[18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28],lower=[48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
 // FDI notation: permanent teeth use 1–4; primary (deciduous) teeth use 5–8.
 const primaryUpper=[55,54,53,52,51,61,62,63,64,65],primaryLower=[85,84,83,82,81,71,72,73,74,75];
-const toothGroups=[['Gigi permanen',upper,lower],['Gigi susu',primaryUpper,primaryLower]];
 const toothNumbers=[...upper,...lower,...primaryUpper,...primaryLower];
-function toothOptions(selected=''){return '<option value="">Pilih gigi</option>'+toothGroups.map(([label,top,bottom])=>`<optgroup label="${label}">${[...top,...bottom].map(n=>`<option value="${n}" ${String(n)===String(selected)?'selected':''}>${n} (${label.toLowerCase()})</option>`).join('')}</optgroup>`).join('');}
+function toothOptions(selected=''){return '<option value="">Pilih gigi</option>'+toothNumbers.map(n=>`<option value="${n}" ${String(n)===String(selected)?'selected':''}>${n}</option>`).join('');}
 function highlightTooth(number){state.focusTooth=String(number||'');document.querySelectorAll('#odontogram .tooth').forEach(el=>el.classList.toggle('tooth-focused',el.dataset.tooth===state.focusTooth));}
 function toothKind(number){const n=Number(number),unit=n%10,isPrimary=Math.floor(n/10)>=5;if(unit<=2)return'incisor';if(unit===3)return'canine';if(isPrimary)return'molar';return unit<=5?'premolar':'molar';}
 function toothShape(number){const kind=toothKind(number);if(kind==='incisor')return'M -11 -15 Q -12 -20 -7 -21 L 7 -21 Q 12 -20 11 -15 L 9 10 Q 8 20 4 22 L -4 22 Q -8 19 -9 10 Z';if(kind==='canine')return'M 0 -22 Q 4 -17 9 -15 Q 14 -12 12 -5 L 8 12 Q 6 21 0 23 Q -6 21 -8 12 L -12 -5 Q -14 -12 -9 -15 Q -4 -17 0 -22 Z';if(kind==='premolar')return'M -12 -15 Q -13 -21 -7 -22 L 7 -22 Q 13 -21 12 -15 L 10 12 Q 8 21 0 23 Q -8 21 -10 12 Z';return'M -13 -14 Q -14 -21 -7 -22 L 7 -22 Q 14 -21 13 -14 L 12 12 Q 10 21 5 22 L -5 22 Q -10 21 -12 12 Z';}
