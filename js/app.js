@@ -1,8 +1,9 @@
-import { $ , notify, showView } from './state.js?v=20261111-1';
-import { loadPatients, initPatients } from './patients.js?v=20261111-1';
-import { initRecords } from './records.js?v=20261111-1';
-import { initCatalog, refreshCatalog } from './catalog.js?v=20261111-1';
-import { initReports } from './reports.js?v=20261111-1';
+// File: app.js — entry point aplikasi dan navigasi utama
+import { $ , notify, showView } from './state.js';
+import { loadPatients, initPatients } from './patients.js';
+import { initRecords } from './records.js';
+import { initCatalog, refreshCatalog } from './catalog.js';
+import { initReports } from './reports.js';
 
 initPatients();
 initRecords();
