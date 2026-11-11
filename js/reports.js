@@ -1,5 +1,5 @@
 import {api} from './api.js';
-import {$,esc,notify} from './state.js?v=20261110-28';
+import {$,esc,notify} from './state.js?v=20261111-1';
 
 const monthLabel=key=>new Intl.DateTimeFormat('id-ID',{month:'short',year:'2-digit',timeZone:'UTC'}).format(new Date(`${key}-01T00:00:00Z`));
 const money=value=>'Rp '+Number(value||0).toLocaleString('id-ID');
