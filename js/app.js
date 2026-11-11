@@ -1,74 +1,61 @@
-// File: catalog.js — pengelolaan katalog tindakan dan obat
-import { api } from './api.js';
-import { state, $, esc, formData, notify } from './state.js';
-import { populateCatalogOptions } from './records.js';
+// File: app.js — entry point aplikasi dan navigasi utama
+import { $ , notify, showView } from './state.js';
+import { loadPatients, initPatients } from './patients.js';
+import { initRecords } from './records.js';
+import { initCatalog, refreshCatalog } from './catalog.js';
+import { initReports } from './reports.js';
 
-export function initCatalog() {
-  $('#treatmentList').addEventListener('click', async (event) => {
-    const button = event.target.closest('[data-save-treatment]');
-    if (!button) return;
-    const treatment = state.treatments.find((item) => String(item.id) === button.dataset.saveTreatment);
-    const input = $('#treatmentList').querySelector(`[data-treatment-price="${CSS.escape(button.dataset.saveTreatment)}"]`);
-    if (!treatment || !input) return;
-    const price = Number(input.value);
-    if (!Number.isFinite(price) || price < 0) {
-      notify('Masukkan harga acuan yang valid.');
-      return;
-    }
-    button.disabled = true;
-    try {
-      await api('treatments.update', { id: treatment.id, nama: treatment.nama, harga: price, aktif: treatment.aktif ?? true });
-      await refresh();
-      notify('Harga acuan tindakan berhasil diperbarui.');
-    } catch (error) {
-      button.disabled = false;
-      notify(error.message);
-    }
-  });
+initPatients();
+initRecords();
+initCatalog();
+initReports();
+showView('home');
 
-  $('#medicineForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    if (form.dataset.saving === 'true') return;
-    form.dataset.saving = 'true';
-    const button = event.submitter || form.querySelector('button[type="submit"],button:not([type])');
-    if (button) button.disabled = true;
-    try {
-      await api('medicines.create', { ...formData(form), aktif: true });
-      form.reset();
-      await refresh();
-      notify('Obat berhasil ditambahkan.');
-    } catch (error) {
-      notify(error.message);
-    } finally {
-      form.dataset.saving = 'false';
-      if (button) button.disabled = false;
-    }
-  });
+document.addEventListener('click', (event) => {
+  const button = event.target.closest?.('button:not(:disabled)');
+  if (!button) return;
+  button.classList.remove('button-tap');
+  void button.offsetWidth;
+  button.classList.add('button-tap');
+  window.setTimeout(() => button.classList.remove('button-tap'), 280);
+});
+
+const jakartaTime = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+const jakartaDate = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+function updateHomeClock() {
+  const now = new Date();
+  $('#homeClock').textContent = jakartaTime.format(now);
+  $('#homeDate').textContent = jakartaDate.format(now);
 }
+updateHomeClock();
+setInterval(updateHomeClock, 1000);
 
-export async function refreshCatalog() {
+document.querySelectorAll('.nav-btn').forEach(button => {
+  button.onclick = () => {
+    showView(button.dataset.view);
+    if (button.dataset.view === 'medical') {
+      $('#medicalLookup').classList.remove('hidden');
+      $('#medicalDetail').classList.add('hidden');
+      $('#medicalSearch').focus();
+    }
+    if (button.dataset.view === 'catalog') refreshCatalog();
+    if (button.dataset.view === 'report') document.querySelector('#reportMessage').textContent = 'Memuat data report…';
+    if (button.dataset.view === 'pending') document.querySelector('#pendingMessage').textContent = 'Memuat daftar pending…';
+  };
+});
+
+document.querySelectorAll('.record-tab').forEach(button => {
+  button.onclick = () => {
+    document.querySelectorAll('.record-tab').forEach(tab => tab.classList.toggle('sub-active', tab === button));
+    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.toggle('hidden', panel.dataset.panel !== button.dataset.tab));
+  };
+});
+
+(async () => {
   try {
-    await refresh();
+    await loadPatients();
   } catch (error) {
+    $('#apiState').textContent = 'gagal';
     notify(error.message);
   }
-}
-
-async function refresh() {
-  state.treatments = await api('treatments.list');
-  state.medicines = await api('medicines.list');
-
-  $('#treatmentList').innerHTML = state.treatments.map((item) => `
-    <div class="grid grid-cols-[minmax(120px,1fr)_150px_auto] gap-2 items-center border-b pb-2">
-      <label class="font-medium" for="price-${esc(item.id)}">${esc(item.nama)}</label>
-      <input id="price-${esc(item.id)}" data-treatment-price="${esc(item.id)}" type="number" min="0" step="1000" value="${Number(item.harga || 0)}" class="field mt-0" aria-label="Harga acuan ${esc(item.nama)}">
-      <button type="button" data-save-treatment="${esc(item.id)}" class="rounded bg-teal-700 px-3 py-2 text-white">Simpan harga</button>
-    </div>`).join('') || '<p class="text-sm text-slate-500">Belum ada tindakan. Daftar tindakan perlu disiapkan di tab Treatment_Catalog.</p>';
-
-  $('#medicineList').innerHTML = state.medicines
-    .map((item) => `<div class="border-t py-2">${esc(item.nama)} ${esc(item.keterangan || '')}</div>`)
-    .join('');
-
-  populateCatalogOptions();
-}
+})();
