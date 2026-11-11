@@ -1,5 +1,6 @@
+// File: patients.js — daftar pasien, pencarian, dan formulir pasien
 import {api} from './api.js';
-import {state,$,esc,formData,notify,showView} from './state.js?v=20261111-1';
+import {state,$,esc,formData,notify,showView} from './state.js';
 let duplicateDecision;
 
 export async function loadPatients(){state.patients=await api('patients.list');renderPatients();$('#apiState').textContent='aktif';}
@@ -23,4 +24,4 @@ export function initPatients(){
  $('#medicalSearchResults').addEventListener('click',async event=>{const button=event.target.closest('[data-search-patient]');if(button)try{await openPatient(button.dataset.searchPatient);}catch(error){notify(error.message);}});
 }
 
-async function openPatient(id){state.patient=state.patients.find(p=>String(p.id)===String(id))||await api('patients.get',{id});state.record=null;state.teeth={};$('#medicalLookup').classList.add('hidden');$('#medicalDetail').classList.remove('hidden');$('#patientHeading').textContent=`${state.patient.nama} • ID ${state.patient.patient_code} • ${state.patient.telepon||''}`;renderPatientSummary(state.patient);const records=await import('./records.js?v=20261111-1');records.resetNewVisit();showView('medical');await Promise.all([records.loadRecords(),records.loadCatalogOptions()]);}
+async function openPatient(id){state.patient=state.patients.find(p=>String(p.id)===String(id))||await api('patients.get',{id});state.record=null;state.teeth={};$('#medicalLookup').classList.add('hidden');$('#medicalDetail').classList.remove('hidden');$('#patientHeading').textContent=`${state.patient.nama} • ID ${state.patient.patient_code} • ${state.patient.telepon||''}`;renderPatientSummary(state.patient);const records=await import('./records.js');records.resetNewVisit();showView('medical');await Promise.all([records.loadRecords(),records.loadCatalogOptions()]);}
