@@ -1,8 +1,8 @@
-import { $ , notify, showView } from './state.js?v=20261110-28';
-import { loadPatients, initPatients } from './patients.js?v=20261110-28';
-import { initRecords } from './records.js?v=20261110-28';
-import { initCatalog, refreshCatalog } from './catalog.js?v=20261110-28';
-import { initReports } from './reports.js?v=20261110-28';
+import { $ , notify, showView } from './state.js?v=20261111-1';
+import { loadPatients, initPatients } from './patients.js?v=20261111-1';
+import { initRecords } from './records.js?v=20261111-1';
+import { initCatalog, refreshCatalog } from './catalog.js?v=20261111-1';
+import { initReports } from './reports.js?v=20261111-1';
 
 initPatients();
 initRecords();
