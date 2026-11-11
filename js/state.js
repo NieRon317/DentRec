@@ -1,3 +1,4 @@
+// File: state.js — state bersama dan helper antarmuka
 export const state={patients:[],patient:null,record:null,records:[],teeth:{},focusTooth:'',readOnly:false,treatments:[],medicines:[]};
 export const $=s=>document.querySelector(s);
 export const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
