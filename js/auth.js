@@ -23,7 +23,7 @@ export async function startAuthentication(onAuthenticated) {
   const changeForm = $('#changePasswordForm');
   const message = $('#authMessage');
   let ready = false;
-  const continueToApp = (user) => {
+  const continueToApp = (user, initialPatients) => {
     currentUser = user;
     if (user.must_change_password) {
       loginForm.classList.add('hidden');
@@ -45,7 +45,7 @@ export async function startAuthentication(onAuthenticated) {
       const allowed = permission === 'home' || (user.menu_permissions || []).includes(permission);
       button.classList.toggle('hidden', !allowed);
     });
-    if (!ready) { ready = true; onAuthenticated(user); }
+    if (!ready) { ready = true; onAuthenticated(user, initialPatients); }
   };
 
   loginForm.addEventListener('submit', async (event) => {
@@ -63,7 +63,8 @@ export async function startAuthentication(onAuthenticated) {
       const result = await api('auth.login', credentials);
       localStorage.setItem('dentrec_session_token', result.token);
       loginForm.reset();
-      continueToApp(result.user);
+      if (result.user.must_change_password) continueToApp(result.user);
+      else { const bootstrap = await api('app.bootstrap'); continueToApp(bootstrap.user, bootstrap.patients); }
     } catch (error) { message.textContent = error.message; } finally { button.disabled = false; button.textContent = oldLabel; }
   });
 
@@ -77,8 +78,8 @@ export async function startAuthentication(onAuthenticated) {
       const passwordHash = await derivePasswordHash(password, salt);
       await api('auth.changePassword', { password_salt: salt, password_hash: passwordHash });
       changeForm.reset();
-      const user = await api('auth.me');
-      continueToApp(user);
+      const bootstrap = await api('app.bootstrap');
+      continueToApp(bootstrap.user, bootstrap.patients);
     } catch (error) { message.textContent = error.message; } finally { button.disabled = false; button.textContent = oldLabel; }
   });
 
@@ -88,16 +89,17 @@ export async function startAuthentication(onAuthenticated) {
     window.location.reload();
   });
 
-  let config;
-  try { config = await api('auth.config'); } catch (error) { overlay.classList.remove('hidden'); message.textContent = 'Tidak dapat memeriksa mode aplikasi: ' + error.message; return; }
-  authEnabled = Boolean(config.enabled);
-  if (!authEnabled) { localStorage.removeItem('dentrec_session_token'); try { continueToApp(await api('auth.me')); } catch (error) { message.textContent = error.message; } return; }
-  overlay.classList.remove('hidden');
+  let bootstrap;
   const token = localStorage.getItem('dentrec_session_token');
-  if (token) {
-    try { continueToApp(await api('auth.me')); }
-    catch (_) { localStorage.removeItem('dentrec_session_token'); }
+  try { bootstrap = await api('app.bootstrap'); }
+  catch (firstError) {
+    if (token) { localStorage.removeItem('dentrec_session_token'); try { bootstrap = await api('app.bootstrap'); } catch (error) { overlay.classList.remove('hidden'); message.textContent = error.message; return; } }
+    else { overlay.classList.remove('hidden'); message.textContent = 'Tidak dapat memuat aplikasi: ' + firstError.message; return; }
   }
+  authEnabled = Boolean(bootstrap.auth_enabled);
+  if (!authEnabled) { localStorage.removeItem('dentrec_session_token'); continueToApp(bootstrap.user, bootstrap.patients); return; }
+  if (bootstrap.user) { continueToApp(bootstrap.user, bootstrap.patients); return; }
+  overlay.classList.remove('hidden');
 }
 
 export function initAdminUsers() {
