@@ -2,11 +2,18 @@
 import { api } from './api.js';
 
 let currentUser = null;
+let authEnabled = true;
 let adminLoader = null;
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const MENUS = ['dashboard', 'medical', 'pending', 'catalog', 'report', 'admin'];
-const MENU_LABELS = { dashboard: 'Pasien', medical: 'Rekam Medis', pending: 'Pending', catalog: 'Katalog', report: 'Report', admin: 'Admin' };
+const MENU_LABELS = { dashboard: 'Pasien', medical: 'Rekam Medis', pending: 'Pending', catalog: 'Katalog', report: 'Report', admin: 'Admin' };const PASSWORD_ITERATIONS = 120000;
+const encoder = new TextEncoder();
+function base64Url(bytes) { let binary = ''; for (const byte of bytes) binary += String.fromCharCode(byte); return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''); }
+function decodeBase64Url(value) { const normalized = value.replace(/-/g, '+').replace(/_/g, '/'); const binary = atob(normalized + '='.repeat((4 - normalized.length % 4) % 4)); return Uint8Array.from(binary, (char) => char.charCodeAt(0)); }
+function newSalt() { const bytes = crypto.getRandomValues(new Uint8Array(24)); return base64Url(bytes); }
+async function derivePasswordHash(password, salt) { const material = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']); const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: encoder.encode(salt), iterations: PASSWORD_ITERATIONS, hash: 'SHA-256' }, material, 256); return `pbkdf2-sha256$${PASSWORD_ITERATIONS}$${base64Url(new Uint8Array(bits))}`; }
+async function challengeProof(hash, nonce) { const verifier = hash.split('$')[2]; const key = await crypto.subtle.importKey('raw', decodeBase64Url(verifier), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']); const proof = await crypto.subtle.sign('HMAC', key, encoder.encode(nonce)); return [...new Uint8Array(proof)].map((byte) => byte.toString(16).padStart(2, '0')).join(''); }
 
 export function signedInUser() { return currentUser; }
 
@@ -42,26 +49,37 @@ export async function startAuthentication(onAuthenticated) {
   };
 
   loginForm.addEventListener('submit', async (event) => {
-    event.preventDefault(); message.textContent = 'Memeriksa akun…';
+    event.preventDefault(); const button = loginForm.querySelector('button[type="submit"]') || loginForm.querySelector('button'); const oldLabel = button.textContent; button.disabled = true; button.textContent = 'Memeriksa…'; message.textContent = 'Memeriksa akun…';
     const form = new FormData(loginForm);
     try {
-      const result = await api('auth.login', { user_id: form.get('user_id'), password: form.get('password') });
+      const userId = form.get('user_id'), password = form.get('password');
+      const challenge = await api('auth.challenge', { user_id: userId });
+      let credentials = { user_id: userId };
+      if (challenge.mode === 'proof') {
+        const hash = await derivePasswordHash(password, challenge.salt);
+        credentials.challenge_token = challenge.challenge_token;
+        credentials.proof = await challengeProof(hash, challenge.nonce);
+      } else credentials.password = password;
+      const result = await api('auth.login', credentials);
       localStorage.setItem('dentrec_session_token', result.token);
       loginForm.reset();
       continueToApp(result.user);
-    } catch (error) { message.textContent = error.message; }
+    } catch (error) { message.textContent = error.message; } finally { button.disabled = false; button.textContent = oldLabel; }
   });
 
   changeForm.addEventListener('submit', async (event) => {
     event.preventDefault(); message.textContent = '';
     const password = changeForm.elements.new_password.value;
     if (password !== changeForm.elements.confirm_password.value) { message.textContent = 'Password baru dan konfirmasi tidak sama.'; return; }
+    const button = changeForm.querySelector('button[type="submit"]') || changeForm.querySelector('button'); const oldLabel = button.textContent; button.disabled = true; button.textContent = 'Menyimpan…'; message.textContent = 'Menyimpan password baru…';
     try {
-      await api('auth.changePassword', { new_password: password });
+      const salt = newSalt();
+      const passwordHash = await derivePasswordHash(password, salt);
+      await api('auth.changePassword', { password_salt: salt, password_hash: passwordHash });
       changeForm.reset();
       const user = await api('auth.me');
       continueToApp(user);
-    } catch (error) { message.textContent = error.message; }
+    } catch (error) { message.textContent = error.message; } finally { button.disabled = false; button.textContent = oldLabel; }
   });
 
   $('#logoutButton').addEventListener('click', async () => {
@@ -70,6 +88,11 @@ export async function startAuthentication(onAuthenticated) {
     window.location.reload();
   });
 
+  let config;
+  try { config = await api('auth.config'); } catch (error) { overlay.classList.remove('hidden'); message.textContent = 'Tidak dapat memeriksa mode aplikasi: ' + error.message; return; }
+  authEnabled = Boolean(config.enabled);
+  if (!authEnabled) { localStorage.removeItem('dentrec_session_token'); try { continueToApp(await api('auth.me')); } catch (error) { message.textContent = error.message; } return; }
+  overlay.classList.remove('hidden');
   const token = localStorage.getItem('dentrec_session_token');
   if (token) {
     try { continueToApp(await api('auth.me')); }
@@ -108,9 +131,14 @@ export function initAdminUsers() {
     event.preventDefault(); const data = new FormData(form);
     const permissions = [...form.querySelectorAll('[name="menu_permissions"]:checked')].map((box) => box.value).filter((value) => MENUS.includes(value));
     const editing = Boolean(form.elements.id.value);
-    const payload = { id: form.elements.id.value, user_id: data.get('user_id'), nama: data.get('nama'), jabatan: data.get('jabatan'), password: data.get('password'), menu_permissions: permissions, aktif: form.elements.aktif.checked };
-    try { await api(editing ? 'users.update' : 'users.create', payload); message.textContent = editing ? 'User diperbarui.' : 'User dibuat; password sementara wajib diganti saat login pertama.'; form.reset(); await load(); }
-    catch (error) { message.textContent = error.message; }
+    const button = form.querySelector('button[type="submit"]') || form.querySelector('button'); const oldLabel = button.textContent; button.disabled = true; button.textContent = 'Menyimpan…'; message.textContent = 'Menyimpan data user…';
+    try {
+      const rawPassword = String(data.get('password') || '');
+      const passwordSalt = rawPassword && authEnabled ? newSalt() : '';
+      const passwordHash = rawPassword && authEnabled ? await derivePasswordHash(rawPassword, passwordSalt) : '';
+      const payload = { id: form.elements.id.value, user_id: data.get('user_id'), nama: data.get('nama'), jabatan: data.get('jabatan'), password: authEnabled ? '' : rawPassword, password_salt: passwordSalt, password_hash: passwordHash, menu_permissions: permissions, aktif: form.elements.aktif.checked };
+      await api(editing ? 'users.update' : 'users.create', payload); message.textContent = editing ? 'User diperbarui.' : 'User dibuat; password sementara wajib diganti saat login pertama.'; form.reset(); await load();
+    } catch (error) { message.textContent = error.message; } finally { button.disabled = false; button.textContent = oldLabel; }
   });
   load();
 }
