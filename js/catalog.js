@@ -56,8 +56,7 @@ export async function refreshCatalog() {
 }
 
 async function refresh() {
-  state.treatments = await api('treatments.list');
-  state.medicines = await api('medicines.list');
+  [state.treatments, state.medicines] = await Promise.all([api('treatments.list'), api('medicines.list')]);
 
   $('#treatmentList').innerHTML = state.treatments.map((item) => `
     <div class="grid grid-cols-[minmax(120px,1fr)_150px_auto] gap-2 items-center border-b pb-2">
