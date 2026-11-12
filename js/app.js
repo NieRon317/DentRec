@@ -6,7 +6,16 @@ import { initCatalog, refreshCatalog } from './catalog.js';
 import { initReports } from './reports.js';
 import { initAdminUsers, startAuthentication } from './auth.js';
 
-function initializeApp(user) {
+const jakartaTime = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+const jakartaDate = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+function updateHomeClock() {
+  $('#homeClock').textContent = jakartaTime.format(new Date());
+  $('#homeDate').textContent = jakartaDate.format(new Date());
+}
+updateHomeClock();
+setInterval(updateHomeClock, 1000);
+
+function initializeApp(user, initialPatients) {
   initPatients();
   initRecords();
   initCatalog();
@@ -21,15 +30,6 @@ function initializeApp(user) {
     button.classList.add('button-tap');
     window.setTimeout(() => button.classList.remove('button-tap'), 280);
   });
-
-  const jakartaTime = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-  const jakartaDate = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  function updateHomeClock() {
-    $('#homeClock').textContent = jakartaTime.format(new Date());
-    $('#homeDate').textContent = jakartaDate.format(new Date());
-  }
-  updateHomeClock();
-  setInterval(updateHomeClock, 1000);
 
   document.querySelectorAll('.nav-btn').forEach((button) => {
     button.onclick = () => {
@@ -54,7 +54,7 @@ function initializeApp(user) {
   });
 
   if ((user.menu_permissions || []).includes('dashboard')) {
-    loadPatients().then(() => { $('#apiState').textContent = 'terhubung'; }).catch((error) => {
+    loadPatients(Array.isArray(initialPatients) ? initialPatients : undefined).then(() => { $('#apiState').textContent = 'terhubung'; }).catch((error) => {
       $('#apiState').textContent = 'gagal'; notify(error.message);
     });
   } else {
