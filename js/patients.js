@@ -3,7 +3,7 @@ import {api} from './api.js';
 import {state,$,esc,formData,notify,showView} from './state.js';
 let duplicateDecision;
 
-export async function loadPatients(){state.patients=await api('patients.list');renderPatients();$('#apiState').textContent='aktif';}
+export async function loadPatients(initialData){state.patients=Array.isArray(initialData)?initialData:await api('patients.list');renderPatients();$('#apiState').textContent='aktif';}
 
 function renderPatients(){const q=$('#search').value.toLowerCase(),rows=state.patients.filter(p=>`${p.nama} ${p.patient_code} ${p.telepon}`.toLowerCase().includes(q));$('#patientRows').innerHTML=rows.map(p=>`<tr class="border-b"><td class="p-3">${esc(p.patient_code)}</td><td class="p-3 font-medium">${esc(p.nama)}</td><td class="p-3">${esc(p.telepon)}</td><td class="p-3">${esc(p.next_visit_date||p.next_follow_up||'')}</td><td class="p-3"><div class="flex flex-wrap gap-2"><button data-open="${esc(p.id)}" class="action-btn action-medical">Rekam Medis</button><button data-edit="${esc(p.id)}" class="action-btn action-edit">Edit</button></div></td></tr>`).join('')||'<tr><td class="p-3" colspan="5">Belum ada pasien.</td></tr>';}
 
