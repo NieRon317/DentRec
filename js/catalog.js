@@ -3,6 +3,8 @@ import { api } from './api.js';
 import { state, $, esc, formData, notify } from './state.js';
 import { populateCatalogOptions } from './records.js';
 
+let catalogRequest=null,catalogLoadedAt=0;
+
 export function initCatalog() {
   $('#treatmentList').addEventListener('click', async (event) => {
     const button = event.target.closest('[data-save-treatment]');
@@ -18,7 +20,7 @@ export function initCatalog() {
     button.disabled = true;
     try {
       await api('treatments.update', { id: treatment.id, nama: treatment.nama, harga: price, aktif: treatment.aktif ?? true });
-      await refresh();
+      await refresh(true);
       notify('Harga acuan tindakan berhasil diperbarui.');
     } catch (error) {
       button.disabled = false;
@@ -36,7 +38,7 @@ export function initCatalog() {
     try {
       await api('medicines.create', { ...formData(form), aktif: true });
       form.reset();
-      await refresh();
+      await refresh(true);
       notify('Obat berhasil ditambahkan.');
     } catch (error) {
       notify(error.message);
@@ -47,15 +49,20 @@ export function initCatalog() {
   });
 }
 
-export async function refreshCatalog() {
+export async function refreshCatalog(force=false, silent=false) {
   try {
-    await refresh();
+    await refresh(force);
   } catch (error) {
-    notify(error.message);
+    if(!silent)notify(error.message);
   }
 }
 
-async function refresh() {
+window.addEventListener('dentrec:api-mutation',event=>{if(/^(treatments|medicines)\.(create|update|delete)$/.test(event.detail?.action))catalogLoadedAt=0;});
+
+async function refresh(force=false) {
+  if(catalogRequest)return catalogRequest;
+  if(!force&&catalogLoadedAt&&Date.now()-catalogLoadedAt<120000)return;
+  catalogRequest=(async()=>{
   [state.treatments, state.medicines] = await Promise.all([api('treatments.list'), api('medicines.list')]);
 
   $('#treatmentList').innerHTML = state.treatments.map((item) => `
@@ -70,4 +77,7 @@ async function refresh() {
     .join('');
 
   populateCatalogOptions();
+  catalogLoadedAt=Date.now();
+  })();
+  try{await catalogRequest;}finally{catalogRequest=null;}
 }
