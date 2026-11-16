@@ -4,6 +4,7 @@ import { loadPatients, initPatients } from './patients.js';
 import { initRecords } from './records.js';
 import { initCatalog, refreshCatalog } from './catalog.js';
 import { initReports, loadPending, loadReports } from './reports.js';
+import { initExpenses, loadExpenses } from './expenses.js';
 import { initAdminUsers, startAuthentication } from './auth.js';
 
 const jakartaTime = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
@@ -21,6 +22,7 @@ function scheduleBackgroundPrefetch(user) {
   if (permissions.includes('pending')) jobs.push(() => loadPending());
   if (permissions.includes('catalog')) jobs.push(() => refreshCatalog(false, true));
   if (permissions.includes('report')) jobs.push(() => loadReports());
+  if (permissions.includes('expenses')) jobs.push(() => loadExpenses());
   if (!jobs.length) return;
   let index = 0, lastActivity = Date.now();
   const activity = () => { lastActivity = Date.now(); };
@@ -48,6 +50,7 @@ function initializeApp(user, initialPatients) {
   initRecords();
   initCatalog();
   initReports();
+  initExpenses();
   showView('home');
 
   document.addEventListener('click', (event) => {
@@ -68,6 +71,7 @@ function initializeApp(user, initialPatients) {
         $('#medicalSearch').focus();
       }
       if (button.dataset.view === 'catalog') refreshCatalog();
+      if (button.dataset.view === 'expenses') loadExpenses();
       if (button.dataset.view === 'report') $('#reportMessage').textContent = 'Memuat data report…';
       if (button.dataset.view === 'pending') $('#pendingMessage').textContent = 'Memuat daftar pending…';
       if (button.dataset.view === 'admin') initAdminUsers();
