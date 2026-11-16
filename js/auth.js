@@ -6,8 +6,8 @@ let authEnabled = true;
 let adminLoader = null;
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const MENUS = ['dashboard', 'medical', 'pending', 'catalog', 'report', 'admin'];
-const MENU_LABELS = { dashboard: 'Pasien', medical: 'Rekam Medis', pending: 'Pending', catalog: 'Katalog', report: 'Report', admin: 'Admin' };const PASSWORD_ITERATIONS = 120000;
+const MENUS = ['dashboard', 'medical', 'pending', 'catalog', 'expenses', 'report', 'admin'];
+const MENU_LABELS = { dashboard: 'Pasien', medical: 'Rekam Medis', pending: 'Pending', catalog: 'Katalog', expenses: 'Biaya', report: 'Report', admin: 'Admin' };const PASSWORD_ITERATIONS = 120000;
 const encoder = new TextEncoder();
 function base64Url(bytes) { let binary = ''; for (const byte of bytes) binary += String.fromCharCode(byte); return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''); }
 function decodeBase64Url(value) { const normalized = value.replace(/-/g, '+').replace(/_/g, '/'); const binary = atob(normalized + '='.repeat((4 - normalized.length % 4) % 4)); return Uint8Array.from(binary, (char) => char.charCodeAt(0)); }
