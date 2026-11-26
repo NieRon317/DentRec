@@ -7,11 +7,23 @@ const money = value => 'Rp ' + Number(value || 0).toLocaleString('id-ID');
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 function setDates() { document.querySelectorAll('#view-expenses input[type="date"]').forEach(input => { if (!input.value) input.value = today(); }); }
 function fillItemSelects() {
-  document.querySelectorAll('#inventoryPurchaseForm select[name="item_id"],#inventoryUsageForm select[name="item_id"]').forEach(select => {
+  $('#inventoryNameOptions').innerHTML = inventory.filter(item => item.aktif !== false && String(item.aktif).toLowerCase() !== 'false').map(item => `<option value="${esc(item.nama)}"></option>`).join('');
+  document.querySelectorAll('#inventoryUsageForm select[name="item_id"]').forEach(select => {
     const selected = select.value;
     select.innerHTML = '<option value="">Pilih barang</option>' + inventory.filter(item => item.aktif !== false && String(item.aktif).toLowerCase() !== 'false').map(item => `<option value="${esc(item.id)}">${esc(item.nama)} (stok ${Number(item.stok || 0)} ${esc(item.satuan)})</option>`).join('');
     if (inventory.some(item => String(item.id) === selected)) select.value = selected;
   });
+  syncPurchaseItem();
+}
+function syncPurchaseItem() {
+  const form = $('#inventoryPurchaseForm'), normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const name = normalize(form.elements.nama.value);
+  const item = inventory.find(value => value.aktif !== false && String(value.aktif).toLowerCase() !== 'false' && normalize(value.nama) === name);
+  form.elements.satuan.readOnly = !!item;
+  if (item) form.elements.satuan.value = item.satuan;
+  else if (form.elements.satuan.readOnly === false && form.elements.satuan.dataset.existing === 'true') form.elements.satuan.value = '';
+  form.elements.satuan.dataset.existing = item ? 'true' : 'false';
+  $('#purchaseItemHint').textContent = item ? 'Barang sudah ada; pembelian akan menambah stoknya.' : 'Barang baru akan ditambahkan otomatis ke daftar stok.';
 }
 function render() {
   $('#inventoryRows').innerHTML = inventory.length ? inventory.map(item => {
@@ -46,9 +58,25 @@ function wireForm(formId, action, successMessage, afterSave) {
 }
 export function initExpenses() {
   $('#refreshExpenses').addEventListener('click', () => loadExpenses(true));
+  function showTab(name) {
+    const cost = name === 'cost';
+    $('#expensesCostPanel').classList.toggle('hidden', !cost);
+    $('#expensesStockPanel').classList.toggle('hidden', cost);
+    for (const [button, active] of [[$('#expenseTabCost'), cost], [$('#expenseTabStock'), !cost]]) {
+      button.setAttribute('aria-selected', String(active));
+      button.classList.toggle('bg-teal-700', active);
+      button.classList.toggle('text-white', active);
+      button.classList.toggle('bg-white', !active);
+      button.classList.toggle('text-slate-700', !active);
+    }
+  }
+  $('#expenseTabCost').addEventListener('click', () => showTab('cost'));
+  $('#expenseTabStock').addEventListener('click', () => showTab('stock'));
+  document.querySelector('[data-view="expenses"]').addEventListener('click', () => showTab('cost'));
   wireForm('#routineExpenseForm', 'expenses.create', 'Biaya rutin berhasil disimpan.');
   wireForm('#inventoryItemForm', 'inventory.items.create', 'Barang persediaan berhasil ditambahkan.');
-  wireForm('#inventoryPurchaseForm', 'expenses.create', 'Pembelian tersimpan dan stok bertambah.');
+  wireForm('#inventoryPurchaseForm', 'expenses.create', 'Pembelian tersimpan dan stok bertambah.', syncPurchaseItem);
+  $('#inventoryPurchaseForm').elements.nama.addEventListener('input', syncPurchaseItem);
 
   const usageForm = $('#inventoryUsageForm'), usageType = usageForm.elements.jenis, usageQty = usageForm.elements.jumlah;
   usageType.addEventListener('change', () => { const adjustment = usageType.value === 'Penyesuaian'; usageQty.min = adjustment ? '-999999999' : '0.01'; usageQty.placeholder = adjustment ? 'Positif menambah, negatif mengurangi' : ''; });
