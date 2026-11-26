@@ -63,8 +63,7 @@ export async function startAuthentication(onAuthenticated) {
       const result = await api('auth.login', credentials);
       localStorage.setItem('dentrec_session_token', result.token);
       loginForm.reset();
-      if (result.user.must_change_password) continueToApp(result.user);
-      else { const bootstrap = await api('app.bootstrap'); continueToApp(bootstrap.user, bootstrap.patients); }
+      continueToApp(result.user);
     } catch (error) { message.textContent = error.message; } finally { button.disabled = false; button.textContent = oldLabel; }
   });
 
@@ -76,10 +75,9 @@ export async function startAuthentication(onAuthenticated) {
     try {
       const salt = newSalt();
       const passwordHash = await derivePasswordHash(password, salt);
-      await api('auth.changePassword', { password_salt: salt, password_hash: passwordHash });
+      const result = await api('auth.changePassword', { password_salt: salt, password_hash: passwordHash });
       changeForm.reset();
-      const bootstrap = await api('app.bootstrap');
-      continueToApp(bootstrap.user, bootstrap.patients);
+      continueToApp(result.user);
     } catch (error) { message.textContent = error.message; } finally { button.disabled = false; button.textContent = oldLabel; }
   });
 
