@@ -47,6 +47,22 @@ export function initCatalog() {
       if (button) button.disabled = false;
     }
   });
+
+  $('#medicineList').addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-delete-medicine]');
+    if (!button) return;
+    const medicine = state.medicines.find((item) => String(item.id) === button.dataset.deleteMedicine);
+    if (!medicine || !confirm(`Hapus obat "${medicine.nama}" dari katalog?`)) return;
+    button.disabled = true;
+    try {
+      await api('medicines.delete', { id: medicine.id });
+      await refresh(true);
+      notify('Obat berhasil dihapus dari katalog.');
+    } catch (error) {
+      button.disabled = false;
+      notify(error.message);
+    }
+  });
 }
 
 export async function refreshCatalog(force=false, silent=false) {
@@ -73,7 +89,7 @@ async function refresh(force=false) {
     </div>`).join('') || '<p class="text-sm text-slate-500">Belum ada tindakan. Daftar tindakan perlu disiapkan di tab Treatment_Catalog.</p>';
 
   $('#medicineList').innerHTML = state.medicines
-    .map((item) => `<div class="border-t py-2">${esc(item.nama)} ${esc(item.keterangan || '')}</div>`)
+    .map((item) => `<div class="border-t py-2 flex items-center justify-between gap-3"><span>${esc(item.nama)} ${esc(item.keterangan || '')}</span><button type="button" data-delete-medicine="${esc(item.id)}" class="text-rose-700 hover:text-rose-900 shrink-0" aria-label="Hapus obat ${esc(item.nama)}">Hapus</button></div>`)
     .join('');
 
   populateCatalogOptions();
