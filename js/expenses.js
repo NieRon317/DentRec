@@ -2,7 +2,7 @@
 import { api } from './api.js';
 import { $, esc, notify } from './state.js';
 
-let request = null, loadedAt = 0, expenses = [], inventory = [], movements = [];
+let request = null, loadedAt = 0, expenses = [], inventory = [];
 const money = value => 'Rp ' + Number(value || 0).toLocaleString('id-ID');
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 function setDates() { document.querySelectorAll('#view-expenses input[type="date"]').forEach(input => { if (!input.value) input.value = today(); }); }
@@ -18,11 +18,6 @@ function render() {
     const low = Number(item.stok || 0) <= Number(item.stok_minimum || 0);
     return `<tr class="border-b"><td class="p-2 font-medium">${esc(item.nama)}${String(item.aktif).toLowerCase() === 'false' ? ' <span class="text-xs text-slate-500">(nonaktif)</span>' : ''}</td><td class="p-2"><b class="${low ? 'text-rose-700' : 'text-teal-800'}">${Number(item.stok || 0).toLocaleString('id-ID')} ${esc(item.satuan)}</b>${low ? '<div class="text-xs text-rose-600">Stok minimum</div>' : ''}</td><td class="p-2">${Number(item.stok_minimum || 0).toLocaleString('id-ID')} ${esc(item.satuan)}</td><td class="p-2">${money(item.harga_satuan_rata)}</td><td class="p-2 whitespace-nowrap"><button type="button" class="action-btn action-edit" data-item-edit="${esc(item.id)}">Edit barang</button></td></tr>`;
   }).join('') : '<tr><td colspan="5" class="p-4 text-center text-slate-500">Belum ada barang persediaan.</td></tr>';
-  $('#stockMovementRows').innerHTML = movements.length ? movements.map(move => {
-    const item = inventory.find(value => String(value.id) === String(move.item_id));
-    const sign = move.jenis === 'Masuk' || String(move.jenis).endsWith('+') ? '+' : move.jenis === 'Keluar' || String(move.jenis).endsWith('-') ? '−' : '';
-    return `<tr class="border-b"><td class="p-2 whitespace-nowrap">${esc(move.tanggal)}</td><td class="p-2">${esc(move.inventory_name || 'Barang tidak ditemukan')}</td><td class="p-2">${esc(move.jenis)} ${sign}${Number(move.jumlah || 0).toLocaleString('id-ID')} ${esc(item?.satuan || '')}</td><td class="p-2">${esc(move.catatan)}</td></tr>`;
-  }).join('') : '<tr><td colspan="4" class="p-4 text-center text-slate-500">Belum ada pergerakan stok.</td></tr>';
   $('#expenseRows').innerHTML = expenses.length ? expenses.slice(0, 200).map(expense => `<tr class="border-b"><td class="p-2 whitespace-nowrap">${esc(expense.tanggal)}</td><td class="p-2">${esc(expense.jenis)}<div class="text-xs text-slate-500">${esc(expense.kategori)}</div></td><td class="p-2">${esc(expense.keterangan)}${expense.inventory_name ? `<div class="text-xs text-slate-500">${esc(expense.inventory_name)} · ${Number(expense.jumlah || 0).toLocaleString('id-ID')} ${esc(expense.satuan)}</div>` : ''}</td><td class="p-2 text-right">${expense.jenis === 'Pembelian Stok' ? `${Number(expense.jumlah || 0).toLocaleString('id-ID')} ${esc(expense.satuan)}` : '—'}</td><td class="p-2 text-right whitespace-nowrap">${money(expense.total)}</td><td class="p-2"><button type="button" class="text-rose-700 hover:text-rose-900" data-expense-delete="${esc(expense.id)}">Hapus</button></td></tr>`).join('') : '<tr><td colspan="6" class="p-4 text-center text-slate-500">Belum ada biaya yang dicatat.</td></tr>';
   fillItemSelects();
 }
@@ -31,7 +26,7 @@ export function loadExpenses(force = false) {
   if (!force && loadedAt && Date.now() - loadedAt < 120000) return Promise.resolve();
   $('#expenseMessage').textContent = 'Memuat biaya dan persediaan…';
   request = (async () => {
-    try { const data = await api('expenses.bootstrap'); expenses = data.expenses || []; inventory = data.inventory || []; movements = data.movements || []; render(); setDates(); loadedAt = Date.now(); $('#expenseMessage').textContent = ''; }
+    try { const data = await api('expenses.bootstrap'); expenses = data.expenses || []; inventory = data.inventory || []; render(); setDates(); loadedAt = Date.now(); $('#expenseMessage').textContent = ''; }
     catch (error) { $('#expenseMessage').textContent = 'Data biaya gagal dimuat: ' + error.message; }
     finally { request = null; }
   })();
