@@ -1,7 +1,7 @@
 // File: app.js — entry point aplikasi, navigasi, dan sesi login
 import { $, notify, showView } from './state.js';
-import { loadPatients, initPatients } from './patients.js';
-import { initRecords } from './records.js';
+import { loadPatients, initPatients } from './patients.js?v=odontogram-fix-1';
+import { initRecords } from './records.js?v=odontogram-fix-1';
 import { initCatalog, refreshCatalog } from './catalog.js';
 import { initReports, loadPending, loadReports } from './reports.js';
 import { initExpenses, loadExpenses } from './expenses.js';
