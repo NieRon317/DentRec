@@ -1,5 +1,5 @@
 // File: state.js — state bersama dan helper antarmuka
-export const state={patients:[],patient:null,record:null,records:[],teeth:{},dentalData:{records:[],findings:[],treatments:[]},dentalApiReady:true,dentalMode:'permanent',focusTooth:'',focusSurface:'',activeTreatmentRow:null,activeFindingRow:null,readOnly:false,treatments:[],medicines:[]};
+export const state={patients:[],patient:null,record:null,records:[],teeth:{},dentalData:{records:[],findings:[],treatments:[]},dentalApiReady:true,dentalMode:'permanent',focusTooth:'',focusSurface:'',activeTreatmentRow:null,activeFindingRow:null,readOnly:false,treatments:[],medicines:[],catalogOptionsRequest:null,catalogOptionsLoadedAt:0};
 export const $=s=>document.querySelector(s);
 export const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const formData=form=>Object.fromEntries(new FormData(form));
