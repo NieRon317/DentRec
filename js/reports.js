@@ -43,7 +43,7 @@ export function initReports(){
     const openButton=event.target.closest('[data-open-patient]');
     if(openButton){
       openButton.disabled=true;
-      try{const {openPatient}=await import('./patients.js');await openPatient(openButton.dataset.openPatient);}
+      try{const {openPatient}=await import('./patients.js?v=records-perf-1');await openPatient(openButton.dataset.openPatient);}
       catch(error){notify(error.message);openButton.disabled=false;}
       return;
     }
