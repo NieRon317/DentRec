@@ -1,7 +1,7 @@
 // File: catalog.js — pengelolaan katalog tindakan dan obat
 import { api } from './api.js';
 import { state, $, esc, formData, notify } from './state.js';
-import { populateCatalogOptions } from './records.js';
+import { loadCatalogOptions } from './records.js?v=records-perf-1';
 
 let catalogRequest=null,catalogLoadedAt=0;
 
@@ -73,13 +73,13 @@ export async function refreshCatalog(force=false, silent=false) {
   }
 }
 
-window.addEventListener('dentrec:api-mutation',event=>{if(/^(treatments|medicines)\.(create|update|delete)$/.test(event.detail?.action))catalogLoadedAt=0;});
+window.addEventListener('dentrec:api-mutation',event=>{if(/^(treatments|medicines)\.(create|update|delete)$/.test(event.detail?.action)){catalogLoadedAt=0;state.catalogOptionsLoadedAt=0;}});
 
 async function refresh(force=false) {
   if(catalogRequest)return catalogRequest;
   if(!force&&catalogLoadedAt&&Date.now()-catalogLoadedAt<120000)return;
   catalogRequest=(async()=>{
-  [state.treatments, state.medicines] = await Promise.all([api('treatments.list'), api('medicines.list')]);
+  await loadCatalogOptions(force);
 
   $('#treatmentList').innerHTML = state.treatments.map((item) => `
     <div class="grid grid-cols-[minmax(120px,1fr)_150px_auto] gap-2 items-center border-b pb-2">
@@ -92,7 +92,6 @@ async function refresh(force=false) {
     .map((item) => `<div class="border-t py-2 flex items-center justify-between gap-3"><span>${esc(item.nama)} ${esc(item.keterangan || '')}</span><button type="button" data-delete-medicine="${esc(item.id)}" class="text-rose-700 hover:text-rose-900 shrink-0" aria-label="Hapus obat ${esc(item.nama)}">Hapus</button></div>`)
     .join('');
 
-  populateCatalogOptions();
   catalogLoadedAt=Date.now();
   })();
   try{await catalogRequest;}finally{catalogRequest=null;}
